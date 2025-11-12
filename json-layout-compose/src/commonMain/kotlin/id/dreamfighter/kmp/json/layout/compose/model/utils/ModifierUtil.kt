@@ -131,7 +131,6 @@ fun Modifier.collectBoxProps(
 
     // --- 4. CLIP ---
     props.clip?.let { clip ->
-        println("props.clip ${props.clip}")
         when(clip.type){
             "ROUND" -> {
                 partModifier = partModifier.clip(RoundedCornerShape(
@@ -154,7 +153,6 @@ fun Modifier.collectBoxProps(
 
     // --- 3. BACKGROUND ---
     props.background?.let {
-        println("props.background ${it.color}")
         partModifier = partModifier.background(it.color)
     }
     props.gradientBackground?.let {
