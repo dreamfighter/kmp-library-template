@@ -11,6 +11,9 @@ startupRuntime = "1.2.0"
 compose-plugin = "1.9.1"
 media3-exoplayer = "1.4.1"
 compose-webview = "2.0.3"
+coil = "3.0.0-rc01"
+ktor = "3.3.2"
+ktor-client = "2.3.12"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
@@ -22,7 +25,14 @@ nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.grad
 system-lambda = { module = "com.github.stefanbirkner:system-lambda", version.ref = "systemLambda" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
-kmp-compose-webview = { module = "io.github.kevinnzou:compose-webview-multiplatform", version.ref = "compose-webview"}
+kmp-compose-webview = { module = "io.github.kevinnzou:compose-webview-multiplatform", version.ref = "compose-webview" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-core-wasmJs = { module = "io.ktor:ktor-client-core-wasmJs", version.ref = "ktor" }
+ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 
 [plugins]
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }

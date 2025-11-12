@@ -2,10 +2,13 @@ package id.dreamfighter.kmp.json.layout.compose.model.utils
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -13,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import id.dreamfighter.kmp.json.layout.compose.model.parts.ListItems
 import id.dreamfighter.kmp.json.layout.compose.model.parts.Props
+import id.dreamfighter.kmp.json.layout.compose.model.shape.Parallelogram
 import id.dreamfighter.kmp.json.layout.compose.model.type.Align
 import id.dreamfighter.kmp.json.layout.compose.model.type.ItemColor
 import kotlin.math.PI
@@ -30,9 +34,13 @@ fun RowScope.createModifier(
         Modifier.weight(listItems.weight)
     } else Modifier
 
-    modifier = commonModifier(modifier, listItems)
-    modifier = collectRowScopeProps(modifier = modifier, props = listItems.props)
+    // Apply common props first (like weight from Props)
+    modifier = collectRowScopeProps(modifier, listItems.props)
 
+    // Then apply common background
+    modifier = commonModifier(modifier, listItems)
+
+    // Then apply alignment
     return when (listItems.alignment) {
         Align.START -> modifier.align(Alignment.Top)
         Align.END -> modifier.align(Alignment.Bottom)
@@ -51,12 +59,21 @@ fun RowScope.collectRowScopeProps(
 
     var modifierItem = modifier
 
+    // --- LOGICAL ORDER ---
+    // 1. Size
     props.weight?.let {
         modifierItem = modifierItem.weight(it)
     }
     props.fillWeight?.let {
         modifierItem = modifierItem.weight(it, fill = true)
     }
+
+    // 2. Background
+    props.background?.let {
+        modifierItem = modifierItem.background(it.color)
+    }
+
+    // 3. Padding
     props.padding?.let { padding ->
         padding.start?.let {
             modifierItem = modifierItem.padding(start = it.dp)
@@ -71,13 +88,14 @@ fun RowScope.collectRowScopeProps(
             modifierItem = modifierItem.padding(bottom = it.dp)
         }
     }
-    props.background?.let {
-        modifierItem = modifierItem.background(it.color)
-    }
 
     return modifierItem
 }
 
+/**
+ * This is the primary function for applying props in the correct order.
+ * Order: Size > Animation > Background > Clip > Padding > Other
+ */
 fun Modifier.collectBoxProps(
     props: Props?
 ): Modifier {
@@ -85,6 +103,67 @@ fun Modifier.collectBoxProps(
 
     var partModifier = this
 
+    // --- 1. SIZE ---
+    if (props.fillMaxSize == true) {
+        partModifier = partModifier.fillMaxSize()
+    } else {
+        if (props.fillMaxWidth == true) {
+            partModifier = partModifier.fillMaxWidth()
+        } else {
+            props.width?.let { partModifier = partModifier.width(it.dp) }
+        }
+
+        if (props.fillMaxHeight == true) {
+            partModifier = partModifier.fillMaxHeight()
+        } else {
+            props.height?.let { partModifier = partModifier.height(it.dp) }
+        }
+    }
+
+    if (props.intrinsicSizeMax == true) {
+        partModifier = partModifier.height(IntrinsicSize.Max)
+    }
+
+    // --- 2. ANIMATION ---
+    if (props.animateContentSize == true) {
+        partModifier = partModifier.animateContentSize()
+    }
+
+    // --- 4. CLIP ---
+    props.clip?.let { clip ->
+        println("props.clip ${props.clip}")
+        when(clip.type){
+            "ROUND" -> {
+                partModifier = partModifier.clip(RoundedCornerShape(
+                    topEnd = (clip.topEnd ?: 0.0).dp,
+                    topStart = (clip.topStart ?: 0.0).dp,
+                    bottomStart = (clip.bottomStart ?: 0.0).dp,
+                    bottomEnd = (clip.bottomEnd ?: 0.0).dp
+                ))
+            }
+            "PARALLELOGRAM" -> {
+                partModifier = partModifier.clip(Parallelogram(
+                    (clip.offset ?: 0.0).toFloat(),
+                    (clip.leftOffset ?: 0.0).toFloat(),
+                    (clip.rightOffset ?: 0.0).toFloat()
+                ))
+            }
+            // Add CUSTOM clip type logic if needed
+        }
+    }
+
+    // --- 3. BACKGROUND ---
+    props.background?.let {
+        println("props.background ${it.color}")
+        partModifier = partModifier.background(it.color)
+    }
+    props.gradientBackground?.let {
+        val angle = it.angle ?: 0.0
+        val listColors = it.colors?.map { c -> c.color } ?: listOf(Color.Transparent, Color.Transparent)
+        partModifier = partModifier.gradientBackground(listColors, angle = angle.toFloat())
+    }
+
+    // --- 5. PADDING (Applied AFTER background/clip) ---
     props.padding?.let { padding ->
         padding.start?.let {
             partModifier = partModifier.padding(start = it.dp)
@@ -100,25 +179,9 @@ fun Modifier.collectBoxProps(
         }
     }
 
-    if (props.animateContentSize == true) {
-        partModifier = partModifier.animateContentSize()
-    }
-    props.height?.let {
-        partModifier = partModifier.height(it.dp)
-    }
-    if (props.fillMaxWidth == true) {
-        partModifier = partModifier.fillMaxWidth()
-    }
-    if (props.fillMaxHeight == true) {
-        partModifier = partModifier.fillMaxHeight()
-    }
-    props.background?.let {
-        partModifier = partModifier.background(it.color)
-    }
-    props.gradientBackground?.let {
-        val angle = it.angle ?: 0.0
-        val listColors = it.colors?.map { c -> c.color } ?: listOf(Color.Transparent, Color.Transparent)
-        partModifier = partModifier.gradientBackground(listColors, angle = angle.toFloat())
+    // --- 6. OTHER MODIFIERS ---
+    if (props.basicMarquee == true) {
+        partModifier = partModifier.basicMarquee(iterations = Int.MAX_VALUE)
     }
 
     return partModifier
@@ -132,10 +195,14 @@ fun ColumnScope.createModifier(
         Modifier.weight(listItems.weight)
     } else Modifier
 
-    modifier = commonModifier(modifier, listItems)
+    // Apply common props first
     modifier = collectColumnScopeProps(modifier, listItems.props)
 
-    if (listItems.alignment == null) {
+    // Then apply common background
+    modifier = commonModifier(modifier, listItems)
+
+    // Then apply alignment
+    if(listItems.alignment == null){
         return modifier
     }
     return when (listItems.alignment) {
@@ -155,21 +222,29 @@ private fun ColumnScope.collectColumnScopeProps(
     if (props == null) return modifier
 
     var modifierItem = modifier
-    props.align?.let {
-        modifierItem = modifierItem.align(alignment = when(it) {
-            "START" -> Alignment.Start
-            "END" -> Alignment.End
-            else -> Alignment.Start
-        })
-    }
-    props.background?.let {
-        modifierItem = modifierItem.background(it.color)
-    }
+
+    // --- LOGICAL ORDER ---
+    // 1. Size
     props.weight?.let {
         modifierItem = modifierItem.weight(it)
     }
     props.fillWeight?.let {
         modifierItem = modifierItem.weight(it, fill = true)
+    }
+
+    // 2. Alignment
+    props.align?.let {
+        modifierItem = modifierItem.align(alignment = when(it) {
+            "START" -> Alignment.Start
+            "END" -> Alignment.End
+            "CENTER" -> Alignment.CenterHorizontally
+            else -> Alignment.Start
+        })
+    }
+
+    // 3. Background
+    props.background?.let {
+        modifierItem = modifierItem.background(it.color)
     }
 
     return modifierItem
@@ -232,5 +307,6 @@ fun Modifier.gradientBackground(colors: List<Color>, angle: Float) = this.then(
 )
 
 inline fun <reified T> Any?.asOrFail(): T = this as T
+//inline fun <reified T,reified T> Any.toMapOrFail(): T = this as T
 inline fun <reified T: Any,reified R: Any> Any?.toMapOrEmpty(): Map<T,R> = this as? Map<T,R>?: mapOf()
 inline fun <reified T> Any?.toListOrEmpty(): List<T> = this as? List<T> ?: listOf()

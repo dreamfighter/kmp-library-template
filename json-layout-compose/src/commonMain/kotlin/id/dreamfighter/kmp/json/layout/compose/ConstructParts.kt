@@ -54,6 +54,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.github.dreamfighter.multiplatform.json_layout_compose.generated.resources.Res
 import com.github.dreamfighter.multiplatform.json_layout_compose.generated.resources.logo_ismart
 import id.dreamfighter.kmp.json.layout.compose.model.parts.* // Import all parts
@@ -63,11 +70,9 @@ import id.dreamfighter.kmp.json.layout.compose.model.type.Align
 import id.dreamfighter.kmp.json.layout.compose.model.type.FontSize
 import id.dreamfighter.kmp.json.layout.compose.model.type.Type
 import id.dreamfighter.kmp.json.layout.compose.model.utils.PointF
-import id.dreamfighter.kmp.json.layout.compose.model.utils.collectBoxProps
-import id.dreamfighter.kmp.json.layout.compose.model.utils.collectRowScopeProps
+import id.dreamfighter.kmp.json.layout.compose.model.utils.collectBoxProps // Import the refactored function
 import id.dreamfighter.kmp.json.layout.compose.model.utils.color
 import id.dreamfighter.kmp.json.layout.compose.model.utils.createModifier
-import id.dreamfighter.kmp.json.layout.compose.model.utils.gradientBackground
 import id.dreamfighter.kmp.json.layout.compose.model.utils.toListOrEmpty
 import id.dreamfighter.kmp.json.layout.compose.model.utils.toMapOrEmpty
 import id.dreamfighter.kmp.json.layout.compose.model.view.AutoScrollingLazyRow
@@ -83,7 +88,8 @@ fun ConstructPart(
     data: MutableMap<String,Any?> = mutableMapOf(),
     event:(Map<String,Any>) -> Unit = {_ ->}
 ) {
-    when (listItems) { // Use 'when (listItems)' for smart casting
+    // Use smart casting on the sealed interface
+    when (listItems) {
         is Text -> {
             val textPart = listItems
             var partModifier = modifier
@@ -102,6 +108,8 @@ fun ConstructPart(
                 val fontFamilies = data["fonts"] as Map<*,*>
                 fontfamily = fontFamilies[textPart.fontFamily] as FontListFontFamily
             }
+
+            // --- Data override logic (seems fine) ---
             val text = if(data[textPart.name]!=null){
                 val datas = data[textPart.name] as Map<*,*>
                 if(datas["fontFamily"]!=null){
@@ -130,6 +138,7 @@ fun ConstructPart(
             }else{
                 textPart.message
             }
+
             val textAlign = when (textPart.textAlign) {
                 Align.START -> TextAlign.Left
                 Align.END -> TextAlign.End
@@ -145,55 +154,17 @@ fun ConstructPart(
                 else -> textPart.textFont.toInt().sp
             }
 
-            var color = Color.Black
+            var color = textPart.color.color
             var verticalAnimateScroll = false
 
-            if(textPart.color!=null){
-                color = textPart.color.color
-            }
+            // --- REFACTORED PROPS ---
+            // Apply all common box props in a logical order
+            partModifier = partModifier.collectBoxProps(textPart.props)
 
-            // Refactored Props handling
-            val props = textPart.props
-            if (props != null) {
-                if (props.fillMaxWidth == true) {
-                    partModifier = partModifier.fillMaxWidth()
-                }
-                props.fillMaxHeight?.let {
-                    partModifier = if(it) partModifier.fillMaxHeight() else partModifier.fillMaxHeight(it.toString().toFloat())
-                }
-                props.padding?.let { padding ->
-                    padding.start?.let { partModifier = partModifier.padding(start = it.dp) }
-                    padding.end?.let { partModifier = partModifier.padding(end = it.dp) }
-                    padding.top?.let { partModifier = partModifier.padding(top = it.dp) }
-                    padding.bottom?.let { partModifier = partModifier.padding(bottom = it.dp) }
-                }
+            // Handle props specific to Text
+            textPart.props?.let { props ->
                 if (props.hidden == true && !setHidden) {
                     hidden = true
-                }
-                props.background?.let {
-                    partModifier = partModifier.background(it.color)
-                }
-                props.clip?.let { clip ->
-                    when(clip.type){
-                        "ROUND" -> {
-                            partModifier = partModifier.clip(RoundedCornerShape(
-                                topEnd = (clip.topEnd ?: 0.0).dp,
-                                topStart = (clip.topStart ?: 0.0).dp,
-                                bottomStart = (clip.bottomStart ?: 0.0).dp,
-                                bottomEnd = (clip.bottomEnd ?: 0.0).dp
-                            ))
-                        }
-                        "PARALLELOGRAM" -> {
-                            partModifier = partModifier.clip(Parallelogram(
-                                (clip.offset ?: 0.0).toFloat(),
-                                (clip.leftOffset ?: 0.0).toFloat(),
-                                (clip.rightOffset ?: 0.0).toFloat()
-                            ))
-                        }
-                    }
-                }
-                if (props.basicMarquee == true) {
-                    partModifier = partModifier.basicMarquee(iterations = Int.MAX_VALUE)
                 }
                 props.animated?.let { animated ->
                     when(animated.type){
@@ -216,7 +187,7 @@ fun ConstructPart(
                     }
                 }
             }
-
+            // --- END REFACTORED PROPS ---
 
             if(!hidden) {
                 if (verticalAnimateScroll && texts.isNotEmpty()) {
@@ -225,14 +196,13 @@ fun ConstructPart(
                             maxLines = textPart.maxLines,
                             text = it,
                             color = color,
-                            modifier = partModifier,
+                            modifier = Modifier, // Modifier is applied to the LazyRow
                             textAlign = textAlign,
                             fontSize = fontSize,
                             fontWeight = fontWeight,
                             fontFamily = fontfamily
                         )
                     }
-
                 } else {
                     Text(
                         maxLines = textPart.maxLines,
@@ -317,7 +287,7 @@ fun ConstructPart(
 
                     items?.let {
                         for (item in items) {
-                            ConstructPart(item, modifier = modifier, data)
+                            ConstructPart(item, modifier = modifier, data, event)
                         }
                     }
                 }
@@ -326,13 +296,13 @@ fun ConstructPart(
 
         is Button -> {
             val text = listItems.message
-            Button(onClick = { /*TODO*/ }, modifier = modifier) {
+            val partModifier = modifier.collectBoxProps(listItems.props)
+            Button(onClick = { /*TODO*/ }, modifier = partModifier) {
                 Text(text)
             }
         }
 
         is Image -> {
-            var contentScale = ContentScale.Fit
             val imagePart = listItems
             val imageAlign = when (imagePart.imageAlign) {
                 Align.START -> Alignment.TopStart
@@ -340,20 +310,20 @@ fun ConstructPart(
                 else -> Alignment.Center
             }
             var partModifier = modifier
-            val image: Painter = painterResource(Res.drawable.logo_ismart) // Assuming this is a default
+            val image: Painter = painterResource(Res.drawable.logo_ismart) // Assuming default
 
-            val props = imagePart.props
-            if (props != null) {
-                contentScale = when(props.contentScale) {
-                    "FillWidth" -> ContentScale.FillWidth
-                    else -> ContentScale.Fit
-                }
-                if(props.fillMaxWidth == true){
-                    partModifier = partModifier.fillMaxWidth()
-                }
+            // --- REFACTORED PROPS ---
+            partModifier = partModifier.collectBoxProps(imagePart.props)
+            val contentScale = when(imagePart.props?.contentScale) {
+                "FillWidth" -> ContentScale.FillWidth
+                "FillHeight" -> ContentScale.FillHeight
+                "Fit" -> ContentScale.Fit
+                "Inside" -> ContentScale.Inside
+                else -> ContentScale.Fit
             }
+            // --- END REFACTORED PROPS ---
 
-            var hidden = props?.hidden ?: false
+            var hidden = imagePart.props?.hidden ?: false
             if(data[imagePart.name]!=null){
                 val animateData = data[imagePart.name] as Map<*, *>
                 if(animateData["hidden"]!=null) {
@@ -362,7 +332,7 @@ fun ConstructPart(
             }
 
             if(!hidden) {
-                Image(image, "", modifier = partModifier, contentScale = contentScale)
+                Image(image, "", modifier = partModifier, contentScale = contentScale, alignment = imageAlign)
             }
         }
 
@@ -370,6 +340,10 @@ fun ConstructPart(
             val videoPart = listItems
             val uris = remember { mutableStateListOf<String>() }
             val httpHeaders = remember { mutableStateListOf<Map<String, String>>() }
+
+            // --- REFACTORED PROPS ---
+            val partModifier = modifier.collectBoxProps(videoPart.props)
+            // --- END REFACTORED PROPS ---
 
             var start = 0
             videoPart.url?.let{
@@ -415,7 +389,7 @@ fun ConstructPart(
             }
 
             if(!hidden && uris.isNotEmpty()) {
-                VideoPlayer(uris,httpHeaders){state,track->
+                VideoPlayer(partModifier, uris,httpHeaders){state,track->
                     val map = mapOf(
                         "name" to videoPart.name,
                         "state" to state,
@@ -426,11 +400,114 @@ fun ConstructPart(
         }
 
         is GlideImagePart -> {
-            // ... Your GlideImage logic seems platform-specific (e.g., GlideUrl)
-            // This part needs to be implemented with an expect/actual
-            // For now, leaving it as a placeholder.
-            // You'll need to refactor this to use the new `props` object.
-            Text("GLIDE_IMAGE not implemented in this refactor", color = Color.Red)
+            val imagePart = listItems
+            var partModifier = modifier
+            var imageUrl by remember { mutableStateOf(imagePart.glideUrl ?: "") }
+            val headersHttp = NetworkHeaders.Builder()
+            val context = LocalPlatformContext.current
+            val imageRequest = ImageRequest.Builder(context)
+
+            // --- REFACTORED PROPS ---
+            partModifier = partModifier.collectBoxProps(imagePart.props)
+
+            val contentScale = when(imagePart.props?.contentScale){
+                "FillWidth" -> ContentScale.FillWidth
+                "FillHeight" -> ContentScale.FillHeight
+                "Fit" -> ContentScale.Fit
+                "Inside" -> ContentScale.Inside
+                else -> ContentScale.Fit
+            }
+
+            imagePart.props?.url?.let { imageUrl = it }
+            imagePart.props?.headers?.let {
+                it.forEach { (key, value) ->
+                    headersHttp.add(key,value)
+                    //headersHttp.add(key,value)
+                }
+                //headersHttp.putAll(it)
+            }
+
+            if(imagePart.props?.swing == true){
+                // ... (your swing logic seems fine)
+                val angleOffset = 10f
+                // ...
+                partModifier = partModifier.graphicsLayer(
+                    transformOrigin = TransformOrigin(
+                        pivotFractionX = 0.5f,
+                        pivotFractionY = 0f,
+                    ),
+                    // rotationZ = angle, // Uncomment this when you add the animateFloat
+                )
+            }
+            // --- END REFACTORED PROPS ---
+
+            var hidden by remember { mutableStateOf(imagePart.props?.hidden ?: false) }
+            if(data[imagePart.name]!=null ){
+                val animateData = data[imagePart.name] as Map<*, *> // This cast is still risky
+                animateData["url"]?.let { imageUrl = it.toString() }
+
+                (animateData["headers"] as? Map<String, String>)?.let {
+                    it.forEach { (key, value) ->
+                        headersHttp.add(key,value)
+                        //headersHttp.add(key,value)
+                    }
+                }
+
+                if(animateData["hidden"]!=null) {
+                    hidden = animateData["hidden"] as Boolean
+                }
+            }
+
+            if(!hidden) {
+                // ... Your GlideImage logic
+                // This is platform-specific and needs expect/actual
+                if (imagePart.glideUrl != null && data[imagePart.name] != null) {
+                    //val builder = LazyHeaders.Builder()
+
+                    val values = data[imagePart.name] as Map<String, Any?>
+                    imageUrl = imagePart.glideUrl
+                    if (values["headers"] != null) {
+                        val headers = values["headers"] as Map<String, String>
+                        headers.forEach { (key, value) ->
+                            headersHttp.add(key,value)
+                            //builder.addHeader(key, value)
+                        }
+                    }
+                } else {
+
+                    //val context = LocalContext.current
+                    //Log.d("GLIDE_URL",imageUrl)
+                    //Image(image, "", modifier = partModifier, contentScale = contentScale)
+                }
+
+                // Build the request
+
+                println(imageUrl)
+
+                if(imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = imageRequest.data(imageUrl) // The URL or resource to load
+                            .diskCacheKey(imageUrl)
+                            .memoryCacheKey(imageUrl)
+                            .crossfade(true) // Enable a fade-in animation
+                            .httpHeaders(headersHttp.build())
+                            .build(),
+                        contentScale = contentScale,
+                        contentDescription = "User profile picture",
+                        modifier = partModifier,
+                        onState = { state ->
+                            when (state) {
+                                is AsyncImagePainter.State.Error -> {
+                                    // This will print the *exact* error to your log
+                                    println("Coil Error: ${state.result}")
+                                }
+
+                                else -> {}
+                            }
+                        }
+                    )
+                }
+            }
         }
 
         is Box -> {
@@ -439,13 +516,14 @@ fun ConstructPart(
             var partModifier = modifier.collectBoxProps(box.props)
             var hidden by remember { mutableStateOf(box.props?.hidden ?: false) }
 
+            // Data override logic
             LaunchedEffect(data[box.name]){
                 if(data[box.name]!=null){
                     val datas = data[box.name] as Map<*,*>
-                    datas["props"]?.let { props ->
-                        // This cast is unsafe, ideally data[box.name] is also type-safe
-                        partModifier = modifier.collectBoxProps(props as Props?)
-                    }
+                    // This is tricky. You're overriding Props with a Map.
+                    // You would need to re-parse this map into a Props object.
+                    // (datas["props"] as? Map<String, Any>)?.let { propsMap ->
+                    // }
                     if(datas["hidden"]!=null) {
                         hidden = datas["hidden"] as Boolean
                     }
@@ -467,7 +545,8 @@ fun ConstructPart(
                 ) {
                     items?.let {
                         for (item in items) {
-                            var modifierItem = Modifier.padding(0.dp)
+                            var modifierItem = Modifier
+                            // Apply alignment from props
                             item.props?.align?.let { align ->
                                 modifierItem = modifierItem.align(
                                     alignment = when (align) {
@@ -482,7 +561,7 @@ fun ConstructPart(
                                         "BOTTOM_END" -> Alignment.BottomEnd
                                         else -> Alignment.TopStart
                                     }
-                                )
+                                ) as Modifier.Companion
                             }
                             ConstructPart(item, modifier = modifierItem, data, event)
                         }
@@ -492,7 +571,9 @@ fun ConstructPart(
         }
 
         is Spacer -> {
-            Spacer(modifier = modifier.collectBoxProps(listItems.props))
+            // Apply box props to Spacer
+            val partModifier = modifier.collectBoxProps(listItems.props)
+            Spacer(modifier = partModifier)
         }
 
         is ShapePart -> {
@@ -502,7 +583,7 @@ fun ConstructPart(
             var hidden by remember { mutableStateOf(shape.props?.hidden ?: false) }
 
             if(data[shape.name]!=null ){
-                val shapeData = data[shape.name] as SnapshotStateMap<*, *>
+                val shapeData = data[shape.name] as Map<*, *> // Risky cast
                 if(shapeData["hidden"]!=null) {
                     hidden = shapeData["hidden"] as Boolean
                 }
@@ -530,6 +611,7 @@ fun ConstructPart(
                     }
                 )
 
+            // Apply all other box props (background, size, padding)
             partModifier = partModifier.collectBoxProps(shape.props)
 
             if(!hidden) {
@@ -538,7 +620,7 @@ fun ConstructPart(
                 ) {
                     items.let {
                         for (item in items) {
-                            var modifierItem = Modifier.padding(0.dp)
+                            var modifierItem = Modifier
                             item.props?.align?.let { align ->
                                 modifierItem = modifierItem.align(
                                     alignment = when (align) {
@@ -553,7 +635,7 @@ fun ConstructPart(
                                         "BOTTOM_END" -> Alignment.BottomEnd
                                         else -> Alignment.TopStart
                                     }
-                                )
+                                ) as Modifier.Companion
                             }
                             ConstructPart(item, modifier = modifierItem, data, event)
                         }
@@ -572,25 +654,16 @@ fun ConstructPart(
                 else -> Alignment.CenterHorizontally
             }
 
-            column.props?.let { props ->
-                props.height?.let { partModifier = partModifier.height(it.dp) }
-                props.background?.let { partModifier = partModifier.background(it.color) }
-                props.gradientBackground?.let {
-                    val angle = it.angle ?: 0.0
-                    val listColors = it.colors?.map { c -> c.color } ?: emptyList()
-                    partModifier = partModifier.gradientBackground(listColors, angle = angle.toFloat())
-                }
-                if (props.fillMaxWidth == true) {
-                    partModifier = partModifier.fillMaxWidth()
-                }
-            }
+            // Apply props from the Props object
+            partModifier = partModifier.collectBoxProps(column.props)
 
             Column(
                 horizontalAlignment = horizontalAlignment,
                 modifier = partModifier
             ) {
                 for (item in items) {
-                    var modifierItem = createModifier(listItems = item) // This function is in ModifierUtil
+                    // createModifier applies column-specific props like weight
+                    var modifierItem = createModifier(listItems = item)
                     ConstructPart(item, modifier = modifierItem,data,event)
                 }
             }
@@ -601,27 +674,8 @@ fun ConstructPart(
             val items = row.listItems
             var partModifier = modifier
 
-            row.props?.let { props ->
-                props.height?.let { partModifier = partModifier.height(it.dp) }
-                props.background?.let { partModifier = partModifier.background(it.color) }
-                props.gradientBackground?.let {
-                    val angle = it.angle ?: 0.0
-                    val listColors = it.colors?.map { c -> c.color } ?: emptyList()
-                    partModifier = partModifier.gradientBackground(listColors, angle = angle.toFloat())
-                }
-                if (props.fillMaxWidth == true) {
-                    partModifier = partModifier.fillMaxWidth()
-                }
-                if (props.intrinsicSizeMax == true) {
-                    partModifier = partModifier.height(IntrinsicSize.Max)
-                }
-                props.padding?.let { padding ->
-                    padding.start?.let { partModifier = partModifier.padding(start = it.dp) }
-                    padding.end?.let { partModifier = partModifier.padding(end = it.dp) }
-                    padding.top?.let { partModifier = partModifier.padding(top = it.dp) }
-                    padding.bottom?.let { partModifier = partModifier.padding(bottom = it.dp) }
-                }
-            }
+            // Apply props from the Props object
+            partModifier = partModifier.collectBoxProps(row.props)
 
             val verticalAlignment = when(row.verticalAlignment){
                 "TOP" -> Alignment.Top
@@ -634,12 +688,12 @@ fun ConstructPart(
                 modifier = partModifier
             ) {
                 for (item in items) {
-                    var modifierItem = createModifier(item) // This function is in ModifierUtil
+                    // createModifier applies row-specific props like weight
+                    var modifierItem = createModifier(item)
                     ConstructPart(item, modifierItem, data, event)
                 }
             }
         }
-
         is CardPart -> {
             val card = listItems
             val items = card.listItems
@@ -647,18 +701,13 @@ fun ConstructPart(
             var color = card.cardBackgroundColor?.color ?: Color.White
             var elevation = (card.elevation ?: 10).dp
 
-            card.props?.let { props ->
-                props.height?.let { partModifier = partModifier.height(it.dp) }
-                props.background?.let { partModifier = partModifier.background(it.color) }
-                if (props.fillMaxWidth == true) {
-                    partModifier = partModifier.fillMaxWidth()
-                }
-            }
+            // Apply common props
+            partModifier = partModifier.collectBoxProps(card.props)
 
             var hidden by remember { mutableStateOf(card.props?.hidden ?: false) }
 
             if(data[card.name]!=null){
-                val dt = data[card.name] as Map<*, *>
+                val dt = data[card.name] as Map<*, *> // Risky cast
                 if(dt["hidden"]!=null) {
                     hidden = dt["hidden"] as Boolean
                 }
@@ -671,9 +720,9 @@ fun ConstructPart(
                     colors = CardDefaults.cardColors(containerColor = color)
                 ) {
                     for (item in items) {
-                        var modifierItem = Modifier.background("#00FFFFFF".color)
+                        var modifierItem = Modifier
                         item.props?.background?.let {
-                            modifierItem = modifierItem.background(it.color)
+                            modifierItem = modifierItem.background(it.color) as Modifier.Companion
                         }
                         ConstructPart(item, modifierItem, data)
                     }
@@ -682,10 +731,15 @@ fun ConstructPart(
         }
 
         is Web -> {
-            // Implement your Composable for 'Web' here
+            Text("WEB component not implemented", color = Color.Red)
         }
     }
 }
 
 @Composable
-expect fun VideoPlayer(uris: List<String>, headers:List<Map<String,String>>, listener: (Int,String?) -> Unit = { _, _ ->})
+expect fun VideoPlayer(
+    modifier: Modifier, // <-- ADDED MODIFIER
+    uris: List<String>,
+    headers:List<Map<String,String>>,
+    listener: (Int,String?) -> Unit = { _, _ ->}
+)
