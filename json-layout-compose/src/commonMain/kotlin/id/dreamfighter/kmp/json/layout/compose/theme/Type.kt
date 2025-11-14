@@ -6,7 +6,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.unit.sp
-import org.jetbrains.skia.paragraph.TypefaceFontProvider
 
 
 // Set of Material typography styles to start with

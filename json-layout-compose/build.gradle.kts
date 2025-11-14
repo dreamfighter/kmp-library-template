@@ -1,6 +1,9 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.time.LocalDate
+import java.io.File
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -10,6 +13,7 @@ plugins {
     alias(libs.plugins.serializationPlugin)
     id("module.publication")
     id("io.github.ttypic.swiftklib") version "0.6.3"
+    alias(libs.plugins.vlc.setup)
 }
 
 kotlin {
@@ -65,6 +69,7 @@ kotlin {
                 implementation(libs.coil.compose) // Check for latest version
                 implementation(libs.coil.network.ktor) // For network images
                 implementation(libs.ktor.client.core)
+                implementation(libs.media.player.kmp)
                 //api(libs.kmp.compose.webview)
                 //put your multiplatform dependencies here
             }
@@ -89,9 +94,15 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
+                implementation(compose.desktop.common)
+                implementation(libs.vlcj)
+                //implementation(compose.desktop.currentOs)
+                implementation("org.jogamp.jogl:jogl-all:2.6.0")
+                implementation("org.jogamp.gluegen:gluegen-rt:2.6.0")
+                implementation(libs.compose.multiplatform.media.player)
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.ktor.client.java)
-                implementation("org.slf4j:slf4j-simple:2.0.13")
+                implementation(libs.slf4j.simple)
             }
         }
     }
@@ -130,5 +141,26 @@ swiftklib {
     create("Utils") {
         path = file("native/Utils")
         packageName("id.dreamfighter.multiplatform.swift")
+    }
+}
+
+vlcSetup {
+    vlcVersion = "3.0.21"
+    shouldCompressVlcFiles = true
+    shouldIncludeAllVlcFiles = false
+    pathToCopyVlcLinuxFilesTo = rootDir.resolve("vlc-libs/linux/")
+    pathToCopyVlcMacosFilesTo = rootDir.resolve("vlc-libs/macos/")
+    pathToCopyVlcWindowsFilesTo = rootDir.resolve("vlc-libs/windows/")
+}
+
+compose.desktop {
+    application {
+        jvmArgs += listOf(
+            "-Dprism.verbose=true",
+            "-Dprism.order=es2,sw"
+        )
+        nativeDistributions {
+            appResourcesRootDir = rootDir.resolve("vlc-libs/")
+        }
     }
 }

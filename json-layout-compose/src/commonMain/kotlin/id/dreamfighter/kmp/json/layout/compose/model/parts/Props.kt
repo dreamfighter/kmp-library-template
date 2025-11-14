@@ -40,7 +40,8 @@ data class Props(
     val intrinsicSizeMax: Boolean? = null, // For Row
     val url: String? = null, // For GlideImage/Video
     val headers: Map<String, String>? = null, // For GlideImage/Video
-    val swing: Boolean? = null // For GlideImage
+    val swing: Boolean? = null, // For GlideImage
+    val pointsType:String? = null,
 )
 
 @Serializable

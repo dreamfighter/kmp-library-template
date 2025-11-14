@@ -15,17 +15,11 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -38,8 +32,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,7 +62,6 @@ import id.dreamfighter.kmp.json.layout.compose.model.shape.CustomShape
 import id.dreamfighter.kmp.json.layout.compose.model.shape.Parallelogram
 import id.dreamfighter.kmp.json.layout.compose.model.type.Align
 import id.dreamfighter.kmp.json.layout.compose.model.type.FontSize
-import id.dreamfighter.kmp.json.layout.compose.model.type.Type
 import id.dreamfighter.kmp.json.layout.compose.model.utils.PointF
 import id.dreamfighter.kmp.json.layout.compose.model.utils.collectBoxProps // Import the refactored function
 import id.dreamfighter.kmp.json.layout.compose.model.utils.color
@@ -77,9 +70,7 @@ import id.dreamfighter.kmp.json.layout.compose.model.utils.toListOrEmpty
 import id.dreamfighter.kmp.json.layout.compose.model.utils.toMapOrEmpty
 import id.dreamfighter.kmp.json.layout.compose.model.view.AutoScrollingLazyRow
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import kotlin.concurrent.Volatile
 
 @Composable
 fun ConstructPart(
@@ -381,6 +372,7 @@ fun ConstructPart(
             }
 
             var hidden:Boolean by remember { mutableStateOf(videoPart.props?.hidden ?: false) }
+            //val updatedListener by rememberUpdatedState(listener)
             if(data[videoPart.name]!=null){
                 val animateData = data[videoPart.name] as Map<*, *>
                 if(animateData["hidden"]!=null) {
@@ -491,6 +483,9 @@ fun ConstructPart(
                             .memoryCacheKey(imageUrl)
                             .crossfade(true) // Enable a fade-in animation
                             .httpHeaders(headersHttp.build())
+                            .error {
+                                null
+                            }
                             .build(),
                         contentScale = contentScale,
                         contentDescription = "User profile picture",
@@ -603,6 +598,7 @@ fun ConstructPart(
                             )
                         }
                         "CUSTOM" -> {
+                            val type = shape.props?.pointsType?:"pixel"
                             val start = shape.props?.start?.let { PointF(it.x, it.y) } ?: PointF(0f,0f)
                             val points = shape.props?.points?.map { PointF(it.x, it.y) } ?: emptyList()
                             CustomShape(start, points)
