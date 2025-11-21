@@ -42,6 +42,9 @@ data class Props(
     val headers: Map<String, String>? = null, // For GlideImage/Video
     val swing: Boolean? = null, // For GlideImage
     val pointsType:String? = null,
+    // Audio specific
+    val autoPlay: Boolean? = null,
+    val isLooping: Boolean? = null,
 )
 
 @Serializable

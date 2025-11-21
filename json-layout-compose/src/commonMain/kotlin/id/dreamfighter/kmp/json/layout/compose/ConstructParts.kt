@@ -729,6 +729,37 @@ fun ConstructPart(
         is Web -> {
             Text("WEB component not implemented", color = Color.Red)
         }
+
+        is Audio -> {
+            val audioPart = listItems
+            val partModifier = modifier.collectBoxProps(audioPart.props)
+
+            var url by remember { mutableStateOf(audioPart.url) }
+            // Merge headers from props and direct property
+            val headers = remember {
+                (audioPart.headers ?: emptyMap()) + (audioPart.props?.headers ?: emptyMap())
+            }
+            val autoPlay = audioPart.props?.autoPlay ?: false
+            val isLooping = audioPart.props?.isLooping ?: false
+
+            // Data override logic (if dynamic data exists)
+            if(data[audioPart.name] != null){
+                val map = data[audioPart.name] as? Map<*, *>
+                map?.get("url")?.let { url = it.toString() }
+            }
+
+            val hidden = audioPart.props?.hidden ?: false
+
+            if(!hidden && !url.isNullOrEmpty()) {
+                AudioPlayer(
+                    modifier = partModifier,
+                    url = url!!,
+                    headers = headers,
+                    autoPlay = autoPlay,
+                    isLooping = isLooping
+                )
+            }
+        }
     }
 }
 
@@ -738,4 +769,13 @@ expect fun VideoPlayer(
     uris: List<String>,
     headers:List<Map<String,String>>,
     listener: (Int,String?) -> Unit = { _, _ ->}
+)
+
+@Composable
+expect fun AudioPlayer(
+    modifier: Modifier,
+    url: String,
+    headers: Map<String, String>,
+    autoPlay: Boolean,
+    isLooping: Boolean
 )

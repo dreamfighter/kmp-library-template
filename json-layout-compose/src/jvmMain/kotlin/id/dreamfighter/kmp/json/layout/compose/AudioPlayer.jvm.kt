@@ -1,30 +1,34 @@
 package id.dreamfighter.kmp.json.layout.compose
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.runtime.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.SwingPanel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import chaintech.videoplayer.host.MediaPlayerError
 import chaintech.videoplayer.host.MediaPlayerEvent
 import chaintech.videoplayer.host.MediaPlayerHost
 import chaintech.videoplayer.model.VideoPlayerConfig
 import chaintech.videoplayer.ui.video.VideoPlayerComposable
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import java.io.File
-import java.net.URI
+import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 
-@OptIn(ExperimentalFoundationApi::class)
+// You might need to wrap this in a Box or use a custom UI
+// because vlcj doesn't provide a built-in Audio UI control set for Compose.
+// This plays the audio, but you might need to build Play/Pause buttons in Compose.
 @Composable
-actual fun VideoPlayer(
+actual fun AudioPlayer(
     modifier: Modifier,
-    uris: List<String>,
-    headers: List<Map<String, String>>,
-    listener: (Int, String?) -> Unit
+    url: String,
+    headers: Map<String, String>,
+    autoPlay: Boolean,
+    isLooping: Boolean
 ) {
-    val mediaUri = uris.firstOrNull() ?: return
-    println(mediaUri)
-    val playerHost = remember { MediaPlayerHost(mediaUrl = mediaUri, isLooping = true, isPaused = false) }
+    println(url)
+    val playerHost = remember { MediaPlayerHost(isLooping = false, isPaused = false) }
     val playerConfig = remember { VideoPlayerConfig(showControls = false) }
     playerHost.onError = { error ->
         when(error) {
@@ -49,7 +53,8 @@ actual fun VideoPlayer(
     }
 
     LaunchedEffect(Unit){
-        playerHost.toggleMuteUnmute()
+        playerHost.loadUrl(url)
+        //playerHost.toggleMuteUnmute()
     }
 
     VideoPlayerComposable(

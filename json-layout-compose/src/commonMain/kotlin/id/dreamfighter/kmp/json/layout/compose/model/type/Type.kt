@@ -13,6 +13,6 @@ enum class Type {
     CARD,
     ANIMATED_VISIBILITY,
     SHAPE,
-    WEB
-
+    WEB,
+    AUDIO
 }

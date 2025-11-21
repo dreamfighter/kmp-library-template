@@ -12,7 +12,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.serializationPlugin)
     id("module.publication")
-    id("io.github.ttypic.swiftklib") version "0.6.3"
+    //id("io.github.ttypic.swiftklib") version "0.6.3"
     alias(libs.plugins.vlc.setup)
 }
 
@@ -130,17 +130,6 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-}
-
-swiftklib {
-    create("HelloSwift") {
-        path = file("native/HelloSwift")
-        packageName("com.ttypic.objclibs.greeting")
-    }
-    create("Utils") {
-        path = file("native/Utils")
-        packageName("id.dreamfighter.multiplatform.swift")
     }
 }
 

@@ -23,6 +23,7 @@ val componentSerializersModule = SerializersModule {
         subclass(Text::class)
         subclass(Video::class)
         subclass(Web::class)
+        subclass(Audio::class) // <-- Add this line
     }
 }
 
