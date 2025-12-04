@@ -17,5 +17,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "kmp-json-layout-compose"
-include(":json-layout-compose")
+rootProject.name = "kmp-library-template"
+include(":kmp-library-template")

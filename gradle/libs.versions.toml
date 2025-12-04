@@ -1,7 +1,7 @@
 [versions]
 activity-compose = "1.9.3"
 agp = "8.11.2"
-kotlin = "2.2.20"
+kotlin = "2.2.21"
 kotlinx-serialization-json = "1.7.3"
 nexus-publish = "2.0.0"
 android-minSdk = "24"

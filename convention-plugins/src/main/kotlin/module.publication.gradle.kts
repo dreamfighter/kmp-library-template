@@ -36,7 +36,7 @@ publishing {
         pom {
             name.set("Kotlin KMP Json Layout Compose")
             description.set("Dummy library to test deployment to Maven Central")
-            url.set("https://github.com/dreamfighter/kmp-json-layout-compose")
+            url.set("https://github.com/dreamfighter/kmp-library-template")
 
             licenses {
                 license {
@@ -46,14 +46,14 @@ publishing {
             }
             developers {
                 developer {
-                    id.set("JetBrains")
-                    name.set("JetBrains Team")
-                    organization.set("JetBrains")
-                    organizationUrl.set("https://www.jetbrains.com")
+                    id.set("dreamfighter")
+                    name.set("dreamfighter")
+                    organization.set("dreamfighter.id")
+                    organizationUrl.set("https://dreamfighter.id")
                 }
             }
             scm {
-                url.set("https://github.com/dreamfighter/kmp-json-layout-compose")
+                url.set("https://github.com/dreamfighter/kmp-library-template")
             }
         }
     }
