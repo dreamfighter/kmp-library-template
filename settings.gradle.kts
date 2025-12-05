@@ -18,4 +18,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "kmp-library-template"
-include(":kmp-library-template")
+include(":kmp-library")

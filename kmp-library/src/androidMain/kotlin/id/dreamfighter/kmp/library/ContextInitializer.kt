@@ -1,4 +1,4 @@
-package id.dreamfighter.kmp.library.template
+package id.dreamfighter.kmp.library
 
 import android.content.Context
 import androidx.startup.Initializer

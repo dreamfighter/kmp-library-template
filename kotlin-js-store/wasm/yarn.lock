@@ -6,32 +6,3 @@
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@js-joda/core/-/core-3.2.0.tgz#3e61e21b7b2b8a6be746df1335cf91d70db2a273"
   integrity sha512-PMqgJ0sw5B7FKb2d5bWYIoxjri+QlW/Pys7+Rw82jSH0QN3rB05jZ/VrrsUdh1w4+i2kw9JOejXGq/KhDOX7Kg==
-
-accounting@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/accounting/-/accounting-0.4.1.tgz#87dd4103eff7f4460f1e186f5c677ed6cf566883"
-  integrity sha512-RU6KY9Y5wllyaCNBo1W11ZOTnTHMMgOZkIwdOOs6W5ibMTp72i4xIbEA48djxVGqMNTUNbvrP/1nWg5Af5m2gQ==
-
-currency-formatter@1.5.9:
-  version "1.5.9"
-  resolved "https://registry.yarnpkg.com/currency-formatter/-/currency-formatter-1.5.9.tgz#23880e8c9cefddd24481795adaed65418b4e7048"
-  integrity sha512-47reIlQZzLn+WWI8xPDCaunwLd/abGnPwAXpM8hEvjeuRB8CVa4KjkZJ4Eo0MO1OKXqeiel71O04ITz+6NMzdA==
-  dependencies:
-    accounting "^0.4.1"
-    locale-currency "0.0.2"
-    object-assign "^4.1.1"
-
-locale-currency@0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/locale-currency/-/locale-currency-0.0.2.tgz#e2c90607563ce47a59f9559e45a70e24e4db4b6d"
-  integrity sha512-5uUCVWBhixSV9x48yONxyGaW7YNGwFqM3f0ue1V+GbcHXGfOLKP+2HrwSFxkQ59V7cgcxahkRLD2Lw/CRfBJAQ==
-
-object-assign@^4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.1.tgz#2109adc7965887cfc05cbbd442cac8bfbb360863"
-  integrity sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==
-
-ws@8.18.3:
-  version "8.18.3"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.3.tgz#b56b88abffde62791c639170400c93dcb0c95472"
-  integrity sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==

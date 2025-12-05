@@ -9,7 +9,7 @@
             android:exported="false"
             tools:node="merge">
 
-            <meta-data android:name="id.dreamfighter.kmp.library.template.ContextInitializer"
+            <meta-data android:name="id.dreamfighter.kmp.library.ContextInitializer"
                 android:value="androidx.startup" />
         </provider>
     </application>

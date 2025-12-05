@@ -66,10 +66,9 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.ui)
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.coil.compose) // Check for latest version
-                implementation(libs.coil.network.ktor) // For network images
-                implementation(libs.ktor.client.core)
-                implementation(libs.media.player.kmp)
+                //implementation(libs.coil.compose) // Check for latest version
+                //implementation(libs.coil.network.ktor) // For network images
+                //implementation(libs.media.player.kmp)
                 //api(libs.kmp.compose.webview)
                 //put your multiplatform dependencies here
             }
@@ -83,13 +82,10 @@ kotlin {
         val wasmJsMain by getting {
             dependencies {
                 //implementation(libs.ktor.client.core.wasmJs)
-
-                implementation(npm("currency-formatter", "1.5.9"))
             }
         }
         val jsMain by getting {
             dependencies {
-                implementation(libs.ktor.client.js)
             }
         }
         val jvmMain by getting {
@@ -97,8 +93,6 @@ kotlin {
                 implementation(compose.desktop.common)
                 //implementation(libs.vlcj)
                 //implementation(compose.desktop.currentOs)
-                implementation(libs.ktor.client.okhttp)
-                implementation(libs.ktor.client.java)
                 implementation(libs.slf4j.simple)
             }
         }
