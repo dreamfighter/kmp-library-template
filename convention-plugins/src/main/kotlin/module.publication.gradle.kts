@@ -34,7 +34,7 @@ publishing {
 
         // Provide artifacts information required by Maven Central
         pom {
-            name.set("Kotlin KMP Json Layout Compose")
+            name.set("Kotlin KMP Library Template")
             description.set("Dummy library to test deployment to Maven Central")
             url.set("https://github.com/dreamfighter/kmp-library-template")
 
@@ -60,8 +60,7 @@ publishing {
 }
 
 signing {
-    if (project.hasProperty("signing.gnupg.keyName")) {
-        useGpgCmd()
-        sign(publishing.publications)
-    }
+    // Find all Maven publications and sign them
+    useGpgCmd()
+    sign(publishing.publications)
 }
